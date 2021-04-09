@@ -1,0 +1,15 @@
+- name: "Download plugins"
+  get_url:
+    url: https://jmeter-plugins.org/files/packages/{{ item }}.zip
+    dest: "/tmp/"
+  with_items: "{{ jmeter_plugins }}"
+  when: jmeter_plugins is defined
+
+
+- name: "Extract plugins"
+  unarchive:
+    src: "/tmp/{{ item }}.zip"
+    dest: "{{ jmeter_home }}"
+    remote_src: true
+  with_items: "{{ jmeter_plugins }}"
+  when: jmeter_plugins is defined

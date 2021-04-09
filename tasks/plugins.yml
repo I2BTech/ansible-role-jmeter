@@ -1,0 +1,78 @@
+---
+- name: "Check if plugin-manager exists"
+  stat:
+    path: "{{ jmeter_home }}/lib/ext/jmeter-plugins-manager.jar"
+  register: check_plugin_manager
+
+- block:
+
+    - name: "Download Plugin Manager metadata"
+      get_url:
+        url: https://repo1.maven.org/maven2/kg/apc/jmeter-plugins-manager/maven-metadata.xml
+        dest: "/tmp/jmeter-plugins-manager-metadata.xml"
+
+    - name: "Get latest version from metadata"
+      community.general.xml:
+        path: "/tmp/jmeter-plugins-manager-metadata.xml"
+        xpath: /metadata/versioning/latest
+        content: text
+      register: latest_version
+
+    - name: "Set latest version"
+      set_fact:
+        plugin_manager_version: "{{ latest_version.matches[0].latest }}"
+      changed_when: false
+
+    - name: "Download Plugin Manager"
+      get_url:
+        url: "{{ maven_jpmanager }}/{{ plugin_manager_version }}/jmeter-plugins-manager-{{ plugin_manager_version }}.jar"
+        dest: "{{ jmeter_home }}/lib/ext/jmeter-plugins-manager.jar"
+        owner: "{{ jmeter_user }}"
+        group: "{{ jmeter_user }}"
+
+  when: not check_plugin_manager.stat.exists
+
+- name: "Check if cmdrunner exists"
+  stat:
+    path: "{{ jmeter_home }}/lib/cmdrunner.jar"
+  register: check_cmdrunner
+
+- block:
+
+    - name: "Download cmdrunner metadata"
+      get_url:
+        url: "{{ maven_cmdrunner }}/maven-metadata.xml"
+        dest: "/tmp/jmeter-cmdrunner-metadata.xml"
+
+    - name: "Get latest version from metadata"
+      community.general.xml:
+        path: "/tmp/jmeter-cmdrunner-metadata.xml"
+        xpath: /metadata/versioning/latest
+        content: text
+      register: latest_version
+
+    - name: "Set latest version"
+      set_fact:
+        cmdrunner_version: "{{ latest_version.matches[0].latest }}"
+      changed_when: false
+
+    - name: "Download cmdrunner"
+      get_url:
+        url: "{{ maven_cmdrunner }}/{{ cmdrunner_version }}/cmdrunner-{{ cmdrunner_version }}.jar"
+        dest: "{{ jmeter_home }}/lib/cmdrunner.jar"
+        owner: "{{ jmeter_user }}"
+        group: "{{ jmeter_user }}"
+
+  when: not check_cmdrunner.stat.exists
+
+# TODO: need improvement of idempotency
+- name: "Install plugins"
+  command: |
+    java \
+      -Djava.awt.headless=true \
+      -jar ./lib/cmdrunner.jar \
+      --tool org.jmeterplugins.repository.PluginManagerCMD \
+      install {{ item }}
+  args:
+    chdir: "{{ jmeter_home }}"
+  with_items: "{{ jmeter_plugins }}"

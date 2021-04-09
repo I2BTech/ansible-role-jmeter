@@ -1,0 +1,6 @@
+---
+jmeter_base: "/opt/jmeter"
+jmeter_installer: "/tmp/installer-jmeter"
+jmeter_home: "{{ jmeter_base }}/app"
+maven_jpmanager: https://repo1.maven.org/maven2/kg/apc/jmeter-plugins-manager
+maven_cmdrunner: https://repo1.maven.org/maven2/kg/apc/cmdrunner
