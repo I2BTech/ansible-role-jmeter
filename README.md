@@ -1,5 +1,5 @@
-i2b.jmeter
-==========
+jmeter
+======
 
 Installs and configures JMeter on Ubuntu 20.04.
 
@@ -29,7 +29,7 @@ Example Playbook
 ----------------
 
 ```
-- hosts: i2b-cl-tst-jmeter
+- hosts: jmeter-host
 
   roles:
 

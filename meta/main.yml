@@ -1,0 +1,18 @@
+---
+dependencies: []
+
+galaxy_info:
+  role_name: jmeter
+  author: it@i2btech.com
+  description: JMeter for Ubuntu
+  company: "I2B Technologies S.A."
+  license: "license (BSD, MIT)"
+  min_ansible_version: 2.10
+  platforms:
+    - name: Ubuntu
+      versions:
+        - focal
+  galaxy_tags:
+    - jmeter
+
+allow_duplicates: true
