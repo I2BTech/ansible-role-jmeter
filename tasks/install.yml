@@ -1,58 +1,68 @@
 ---
-- name: "Get user ID"
-  shell: 'id -u'
-  register: usr_id
-  become: false
-  changed_when: false
 
-- set_fact:
-    jmeter_user: "{{ usr_id.stdout }}"
-  changed_when: false
+- name: "Check if jmeter is already installed"
+  stat:
+    path: "{{ jmeter_home }}/bin/jmeter"
+  register: reg_jm
 
-- name: "Download compress file from {{ jmeter_compress_link }} to {{ jmeter_installer }}"
-  get_url:
-    url: "{{ jmeter_compress_link }}"
-    dest: "{{ jmeter_installer }}"
-  when: jmeter_compress_link is defined
+- block:
 
-- name: "Transfer compress file to {{ jmeter_installer }}"
-  copy:
-    src: "{{ jmeter_compress_file }}"
-    dest: "{{ jmeter_installer }}"
-    owner: "{{ jmeter_user }}"
-    group: "{{ jmeter_user }}"
-  when: jmeter_compress_file is defined
+  - name: "Get user ID"
+    shell: 'id -u'
+    register: usr_id
+    become: false
+    changed_when: false
 
-- name: "Ensure {{ jmeter_base }} exists"
-  file:
-    path: "{{ jmeter_base }}"
-    state: directory
-    owner: "{{ jmeter_user }}"
-    group: "{{ jmeter_user }}"
-    mode: 0755
+  - set_fact:
+      jmeter_user: "{{ usr_id.stdout }}"
+    changed_when: false
 
-- name: "Extract compress on {{ jmeter_base }}"
-  unarchive:
-    src: "{{ jmeter_installer }}"
-    dest: "{{ jmeter_base }}"
-    copy: no
-    owner: "{{ jmeter_user }}"
-    group: "{{ jmeter_user }}"
-    creates: "{{ jmeter_base }}/{{ jmeter_compress_content }}"
+  - name: "Download compress file from {{ jmeter_compress_link }} to {{ jmeter_installer }}"
+    get_url:
+      url: "{{ jmeter_compress_link }}"
+      dest: "{{ jmeter_installer }}"
+    when: jmeter_compress_link is defined
 
-- name: "Creates jmeter home"
-  file:
-    src: "{{ jmeter_base }}/{{ jmeter_compress_content }}"
-    dest: "{{ jmeter_home }}"
-    state: "link"
-    force: "yes"
-    owner: "{{ jmeter_user }}"
-    group: "{{ jmeter_user }}"
+  - name: "Transfer compress file to {{ jmeter_installer }}"
+    copy:
+      src: "{{ jmeter_compress_file }}"
+      dest: "{{ jmeter_installer }}"
+      owner: "{{ jmeter_user }}"
+      group: "{{ jmeter_user }}"
+    when: jmeter_compress_file is defined
 
-- name: "Set permission to executables"
-  file:
-    path: "{{ jmeter_home }}/{{ item }}"
-    mode: 0755
-  with_items:
-    - "bin/jmeter"
-    - "bin/jmeter-server"
+  - name: "Ensure {{ jmeter_base }} exists"
+    file:
+      path: "{{ jmeter_base }}"
+      state: directory
+      owner: "{{ jmeter_user }}"
+      group: "{{ jmeter_user }}"
+      mode: 0755
+
+  - name: "Extract compress on {{ jmeter_base }}"
+    unarchive:
+      src: "{{ jmeter_installer }}"
+      dest: "{{ jmeter_base }}"
+      copy: no
+      owner: "{{ jmeter_user }}"
+      group: "{{ jmeter_user }}"
+      creates: "{{ jmeter_base }}/{{ jmeter_compress_content }}"
+
+  - name: "Creates jmeter home"
+    file:
+      src: "{{ jmeter_base }}/{{ jmeter_compress_content }}"
+      dest: "{{ jmeter_home }}"
+      state: "link"
+      force: "yes"
+      owner: "{{ jmeter_user }}"
+      group: "{{ jmeter_user }}"
+
+  - name: "Set permission to executables"
+    file:
+      path: "{{ jmeter_home }}/{{ item }}"
+      mode: 0755
+    with_items:
+      - "bin/jmeter"
+      - "bin/jmeter-server"
+
+  when: not reg_jm.stat.exists
